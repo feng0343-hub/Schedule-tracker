@@ -3,11 +3,32 @@ import './App.css'
 
 function App() {
   const [newTask, setNewTask] = useState('')
+  const [newCategory, setNewCategory] = useState('Other')
   const [tasks, setTasks] = useState([
-    { id: 1, title: 'Workout', completed: false },
-    { id: 2, title: 'Read 20 pages', completed: false },
-    { id: 3, title: 'Study Operating Systems', completed: false },
-    { id: 4, title: 'Work on Schedule Tracker', completed: false },
+    {
+      id: 2,
+      title: 'Pull-ups',
+      category: 'Workout',
+      completed: false,
+    },
+    {
+      id: 3,
+      title: 'Read 20 pages',
+      category: 'Reading',
+      completed: false,
+    },
+    {
+      id: 4,
+      title: 'Study Operating Systems',
+      category: 'Study',
+      completed: false,
+    },
+    {
+      id: 5,
+      title: 'Work on Schedule Tracker',
+      category: 'Projects',
+      completed: false,
+    },
   ])
   function addTask() {
   if (newTask.trim() === '') {
@@ -17,11 +38,13 @@ function App() {
   const task = {
     id: Date.now(),
     title: newTask.trim(),
+    category: newCategory,
     completed: false,
   }
 
   setTasks([...tasks, task])
   setNewTask('')
+  setNewCategory('Other')
 }
   function toggleTask(id) {
     setTasks(
@@ -53,6 +76,18 @@ function App() {
             onChange={(event) => setNewTask(event.target.value)}
           />
 
+          <select
+            value={newCategory}
+            onChange={(event) => setNewCategory(event.target.value)}
+          >
+            <option value="Workout">Workout</option>
+            <option value="Study">Study</option>
+            <option value="Reading">Reading</option>
+            <option value="Writing">Writing</option>
+            <option value="Projects">Projects</option>
+            <option value="Other">Other</option>
+          </select>
+
           <button type="button" onClick={addTask}>
             Add
           </button>
@@ -68,9 +103,15 @@ function App() {
                   onChange={() => toggleTask(task.id)}
                 />
 
-                <span className={task.completed ? 'completed' : ''}>
-                  {task.title}
-                </span>
+                <div>
+                  <span className={task.completed ? 'completed' : ''}>
+                    {task.title}
+                  </span>
+
+                  <small className="task-category">
+                    {task.category}
+                  </small>
+                </div>
               </label>
 
               <button
