@@ -49,3 +49,23 @@
   text-decoration: line-through;
   color: #888;
 }
+.add-task {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.add-task input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.add-task button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}

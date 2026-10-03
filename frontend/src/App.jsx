@@ -2,13 +2,27 @@ import { useState } from 'react'
 import './App.css'
 
 function App() {
+  const [newTask, setNewTask] = useState('')
   const [tasks, setTasks] = useState([
     { id: 1, title: 'Workout', completed: false },
     { id: 2, title: 'Read 20 pages', completed: false },
     { id: 3, title: 'Study Operating Systems', completed: false },
     { id: 4, title: 'Work on Schedule Tracker', completed: false },
   ])
+  function addTask() {
+  if (newTask.trim() === '') {
+    return
+  }
 
+  const task = {
+    id: Date.now(),
+    title: newTask.trim(),
+    completed: false,
+  }
+
+  setTasks([...tasks, task])
+  setNewTask('')
+}
   function toggleTask(id) {
     setTasks(
       tasks.map((task) =>
@@ -28,6 +42,18 @@ function App() {
 
       <section className="task-section">
         <h2>Today's Tasks</h2>
+        <div className="add-task">
+          <input
+            type="text"
+            placeholder="What do you need to do?"
+            value={newTask}
+            onChange={(event) => setNewTask(event.target.value)}
+          />
+
+          <button type="button" onClick={addTask}>
+            Add
+          </button>
+        </div>
 
         <div className="task-list">
           {tasks.map((task) => (
