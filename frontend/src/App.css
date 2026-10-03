@@ -35,9 +35,23 @@
 .task {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 18px;
+}
+
+.task label {
+  display: flex;
+  align-items: center;
   gap: 12px;
   cursor: pointer;
-  font-size: 18px;
+}
+
+.task button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .task input {

@@ -32,6 +32,9 @@ function App() {
       )
     )
   }
+  function deleteTask(id) {
+    setTasks(tasks.filter((task) => task.id !== id))
+  }
 
   return (
     <main className="app">
@@ -57,17 +60,26 @@ function App() {
 
         <div className="task-list">
           {tasks.map((task) => (
-            <label className="task" key={task.id}>
-              <input
-                type="checkbox"
-                checked={task.completed}
-                onChange={() => toggleTask(task.id)}
-              />
+            <div className="task" key={task.id}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => toggleTask(task.id)}
+                />
 
-              <span className={task.completed ? 'completed' : ''}>
-                {task.title}
-              </span>
-            </label>
+                <span className={task.completed ? 'completed' : ''}>
+                  {task.title}
+                </span>
+              </label>
+
+              <button
+                type="button"
+                onClick={() => deleteTask(task.id)}
+              >
+                Delete
+              </button>
+            </div>
           ))}
         </div>
       </section>
