@@ -1,33 +1,63 @@
 import { useState } from 'react'
 import './App.css'
+function getSubtaskProgress(subtasks) {
+  if (subtasks.length === 0) {
+    return 0
+  }
 
+  const completed = subtasks.filter(
+    (subtask) => subtask.completed
+  ).length
+
+  return Math.round((completed / subtasks.length) * 100)
+}
 function App() {
   const [newTask, setNewTask] = useState('')
   const [newCategory, setNewCategory] = useState('Other')
   const [tasks, setTasks] = useState([
     {
-      id: 2,
-      title: 'Pull-ups',
+      id: 1,
+      title: 'Workout',
       category: 'Workout',
       completed: false,
+      subtasks: [
+        {
+          id: 101,
+          title: 'Push-ups',
+          completed: false,
+        },
+        {
+          id: 102,
+          title: 'Pull-ups',
+          completed: false,
+        },
+        {
+          id: 103,
+          title: 'Sit-ups',
+          completed: false,
+        },
+      ],
     },
     {
-      id: 3,
+      id: 2,
       title: 'Read 20 pages',
       category: 'Reading',
       completed: false,
+      subtasks: [],
     },
     {
-      id: 4,
+      id: 3,
       title: 'Study Operating Systems',
       category: 'Study',
       completed: false,
+      subtasks: [],
     },
     {
-      id: 5,
+      id: 4,
       title: 'Work on Schedule Tracker',
       category: 'Projects',
       completed: false,
+      subtasks: [],
     },
   ])
   function addTask() {
@@ -40,6 +70,7 @@ function App() {
     title: newTask.trim(),
     category: newCategory,
     completed: false,
+    subtasks: [],
   }
 
   setTasks([...tasks, task])
@@ -48,11 +79,47 @@ function App() {
 }
   function toggleTask(id) {
     setTasks(
-      tasks.map((task) =>
-        task.id === id
-          ? { ...task, completed: !task.completed }
-          : task
-      )
+      tasks.map((task) => {
+        if (task.id !== id) {
+          return task
+        }
+
+        const completed = !task.completed
+
+        return {
+          ...task,
+          completed,
+          subtasks: task.subtasks.map((subtask) => ({
+            ...subtask,
+            completed,
+          })),
+        }
+      })
+    )
+  }
+  function toggleSubtask(taskId, subtaskId) {
+    setTasks(
+      tasks.map((task) => {
+        if (task.id !== taskId) {
+          return task
+        }
+
+        const updatedSubtasks = task.subtasks.map((subtask) =>
+          subtask.id === subtaskId
+            ? { ...subtask, completed: !subtask.completed }
+            : subtask
+        )
+
+        const allSubtasksCompleted =
+          updatedSubtasks.length > 0 &&
+          updatedSubtasks.every((subtask) => subtask.completed)
+
+        return {
+          ...task,
+          subtasks: updatedSubtasks,
+          completed: allSubtasksCompleted,
+        }
+      })
     )
   }
   function deleteTask(id) {
@@ -96,23 +163,61 @@ function App() {
         <div className="task-list">
           {tasks.map((task) => (
             <div className="task" key={task.id}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => toggleTask(task.id)}
-                />
+              <div className="task-main">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={() => toggleTask(task.id)}
+                  />
 
-                <div>
-                  <span className={task.completed ? 'completed' : ''}>
-                    {task.title}
-                  </span>
+                  <div>
+                    <span className={task.completed ? 'completed' : ''}>
+                      {task.title}
+                    </span>
 
-                  <small className="task-category">
-                    {task.category}
-                  </small>
-                </div>
-              </label>
+                    <small className="task-category">
+                      {task.category}
+                    </small>
+                  </div>
+                </label>
+
+                {task.subtasks.length > 0 && (
+                  <>
+                    <div className="subtasks">
+                      {task.subtasks.map((subtask) => (
+                        <div className="subtask" key={subtask.id}>
+                          <input
+                            type="checkbox"
+                            checked={subtask.completed}
+                            onChange={() => toggleSubtask(task.id, subtask.id)}
+                          />
+
+                          <span className={subtask.completed ? 'completed' : ''}>
+                            {subtask.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="progress">
+                      <div className="progress-info">
+                        <span>Progress</span>
+                        <span>{getSubtaskProgress(task.subtasks)}%</span>
+                      </div>
+
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: `${getSubtaskProgress(task.subtasks)}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
 
               <button
                 type="button"
