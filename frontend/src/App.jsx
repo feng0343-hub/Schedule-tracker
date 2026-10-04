@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
+const STORAGE_KEY = 'schedule-tracker-tasks'
 function getSubtaskProgress(subtasks) {
   if (subtasks.length === 0) {
     return 0
@@ -11,55 +12,70 @@ function getSubtaskProgress(subtasks) {
 
   return Math.round((completed / subtasks.length) * 100)
 }
+const initialTasks = [
+  {
+    id: 1,
+    title: 'Workout',
+    category: 'Workout',
+    completed: false,
+    subtasks: [
+      {
+        id: 101,
+        title: 'Push-ups',
+        completed: false,
+      },
+      {
+        id: 102,
+        title: 'Pull-ups',
+        completed: false,
+      },
+      {
+        id: 103,
+        title: 'Sit-ups',
+        completed: false,
+      },
+    ],
+  },
+  {
+    id: 2,
+    title: 'Read 20 pages',
+    category: 'Reading',
+    completed: false,
+    subtasks: [],
+  },
+  {
+    id: 3,
+    title: 'Study Operating Systems',
+    category: 'Study',
+    completed: false,
+    subtasks: [],
+  },
+  {
+    id: 4,
+    title: 'Work on Schedule Tracker',
+    category: 'Projects',
+    completed: false,
+    subtasks: [],
+  },
+]
 function App() {
   const [newTask, setNewTask] = useState('')
   const [newCategory, setNewCategory] = useState('Other')
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: 'Workout',
-      category: 'Workout',
-      completed: false,
-      subtasks: [
-        {
-          id: 101,
-          title: 'Push-ups',
-          completed: false,
-        },
-        {
-          id: 102,
-          title: 'Pull-ups',
-          completed: false,
-        },
-        {
-          id: 103,
-          title: 'Sit-ups',
-          completed: false,
-        },
-      ],
-    },
-    {
-      id: 2,
-      title: 'Read 20 pages',
-      category: 'Reading',
-      completed: false,
-      subtasks: [],
-    },
-    {
-      id: 3,
-      title: 'Study Operating Systems',
-      category: 'Study',
-      completed: false,
-      subtasks: [],
-    },
-    {
-      id: 4,
-      title: 'Work on Schedule Tracker',
-      category: 'Projects',
-      completed: false,
-      subtasks: [],
-    },
-  ])
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem(STORAGE_KEY)
+
+    if (savedTasks) {
+      return JSON.parse(savedTasks)
+    }
+
+    return initialTasks
+  })
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(tasks)
+    )
+  }, [tasks])
   function addTask() {
   if (newTask.trim() === '') {
     return
