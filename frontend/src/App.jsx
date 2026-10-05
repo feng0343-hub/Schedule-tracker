@@ -105,6 +105,7 @@ function App() {
   const [newTask, setNewTask] = useState('')
   const [newCategory, setNewCategory] = useState('Other')
   const [newRecurrence, setNewRecurrence] = useState('none')
+  const [newRecurrenceDays, setNewRecurrenceDays] = useState([])
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY)
 
@@ -131,7 +132,7 @@ function App() {
     category: newCategory,
     type: 'tasks',
     recurrence: newRecurrence,
-    recurrenceDays: [],
+    recurrenceDays: newRecurrenceDays,
     date: getToday(),
     completions: {},
     completed: false,
@@ -142,6 +143,7 @@ function App() {
   setNewTask('')
   setNewCategory('Other')
   setNewRecurrence('none')
+  setNewRecurrenceDays([])
 }
   function toggleTask(id) {
     setTasks(
@@ -258,6 +260,7 @@ function App() {
       })
     )
   }
+  
   function toggleSubtask(taskId, subtaskId) {
     setTasks(
       tasks.map((task) => {
@@ -282,6 +285,15 @@ function App() {
         }
       })
     )
+  }
+  function toggleRecurrenceDay(day) {
+    setNewRecurrenceDays((currentDays) => {
+      if (currentDays.includes(day)) {
+        return currentDays.filter((currentDay) => currentDay !== day)
+      }
+
+      return [...currentDays, day]
+    })
   }
   function deleteTask(id) {
     setTasks(tasks.filter((task) => task.id !== id))
@@ -324,7 +336,36 @@ function App() {
             <option value="daily">Every day</option>
             <option value="weekly">Every week</option>
           </select>
+          {newRecurrence === 'weekly' && (
+            <div className="recurrence-days">
+              <span>Repeat on:</span>
 
+              <div className="day-options">
+                {[
+                  'monday',
+                  'tuesday',
+                  'wednesday',
+                  'thursday',
+                  'friday',
+                  'saturday',
+                  'sunday',
+                ].map((day) => (
+                  <button
+                    type="button"
+                    key={day}
+                    className={
+                      newRecurrenceDays.includes(day)
+                        ? 'day-button selected'
+                        : 'day-button'
+                    }
+                    onClick={() => toggleRecurrenceDay(day)}
+                  >
+                    {day.slice(0, 3).toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <button type="button" onClick={addTask}>
             Add
           </button>
