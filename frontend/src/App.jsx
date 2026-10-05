@@ -48,16 +48,19 @@ const initialTasks = [
         id: 101,
         title: 'Push-ups',
         completed: false,
+        completions: {},
       },
       {
         id: 102,
         title: 'Pull-ups',
         completed: false,
+        completions: {},
       },
       {
         id: 103,
         title: 'Sit-ups',
         completed: false,
+        completions: {},
       },
     ],
   },
@@ -181,6 +184,80 @@ function App() {
       })
     )
   }
+  function toggleRecurringSubtask(taskId, subtaskId) {
+    const today = getToday()
+
+    setTasks(
+      tasks.map((task) => {
+        if (task.id !== taskId) {
+          return task
+        }
+
+        const updatedSubtasks = task.subtasks.map((subtask) => {
+          if (subtask.id !== subtaskId) {
+            return subtask
+          }
+
+          const currentlyCompleted =
+            subtask.completions?.[today] || false
+
+          return {
+            ...subtask,
+            completions: {
+              ...subtask.completions,
+              [today]: !currentlyCompleted,
+            },
+          }
+        })
+
+        const allSubtasksCompleted =
+          updatedSubtasks.length > 0 &&
+          updatedSubtasks.every(
+            (subtask) => subtask.completions?.[today] || false
+          )
+
+        return {
+          ...task,
+          subtasks: updatedSubtasks,
+          completions: {
+            ...task.completions,
+            [today]: allSubtasksCompleted,
+          },
+        }
+      })
+    )
+  }
+  function toggleRecurringTaskWithSubtasks(taskId) {
+    const today = getToday()
+
+    setTasks(
+      tasks.map((task) => {
+        if (task.id !== taskId) {
+          return task
+        }
+
+        const currentlyCompleted =
+          task.completions?.[today] || false
+
+        const newCompletedState = !currentlyCompleted
+
+        return {
+          ...task,
+          completions: {
+            ...task.completions,
+            [today]: newCompletedState,
+          },
+          subtasks: task.subtasks.map((subtask) => ({
+            ...subtask,
+            completions: {
+              ...subtask.completions,
+              [today]: newCompletedState,
+            },
+          })),
+        }
+      })
+    )
+  }
   function toggleSubtask(taskId, subtaskId) {
     setTasks(
       tasks.map((task) => {
@@ -267,7 +344,7 @@ function App() {
                     }
                     onChange={() => {
                       if (task.recurrence !== 'none') {
-                        toggleRecurringTask(task.id)
+                        toggleRecurringTaskWithSubtasks(task.id)
                       } else {
                         toggleTask(task.id)
                       }
@@ -292,10 +369,19 @@ function App() {
                         <div className="subtask" key={subtask.id}>
                           <input
                             type="checkbox"
-                            checked={subtask.completed}
-                            onChange={() => toggleSubtask(task.id, subtask.id)}
+                            checked={
+                              task.recurrence !== 'none'
+                                ? subtask.completions?.[getToday()] || false
+                                : subtask.completed
+                            }
+                            onChange={() => {
+                              if (task.recurrence !== 'none') {
+                                toggleRecurringSubtask(task.id, subtask.id)
+                              } else {
+                                toggleSubtask(task.id, subtask.id)
+                              }
+                            }}
                           />
-
                           <span className={subtask.completed ? 'completed' : ''}>
                             {subtask.title}
                           </span>
