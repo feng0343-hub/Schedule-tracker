@@ -1,6 +1,26 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 const STORAGE_KEY = 'schedule-tracker-tasks'
+function getToday() {
+  return new Date().toISOString().split('T')[0]
+}
+function isTaskForToday(task) {
+  const today = getToday()
+
+  if (task.recurrence === 'daily') {
+    return true
+  }
+
+  if (task.recurrence === 'weekly') {
+    const todayName = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+    }).toLowerCase()
+
+    return task.recurrenceDays.includes(todayName)
+  }
+
+  return task.date === today
+}
 function getSubtaskProgress(subtasks) {
   if (subtasks.length === 0) {
     return 0
@@ -17,6 +37,11 @@ const initialTasks = [
     id: 1,
     title: 'Workout',
     category: 'Workout',
+    type: 'tasks',
+    recurrence: 'none',
+    recurrenceDays: [],
+    date: getToday(),
+    completions: {},
     completed: false,
     subtasks: [
       {
@@ -40,6 +65,11 @@ const initialTasks = [
     id: 2,
     title: 'Read 20 pages',
     category: 'Reading',
+    type: 'tasks',
+    recurrence: 'none',
+    recurrenceDays: [],
+    date: getToday(),
+    completions: {},
     completed: false,
     subtasks: [],
   },
@@ -47,6 +77,11 @@ const initialTasks = [
     id: 3,
     title: 'Study Operating Systems',
     category: 'Study',
+    type: 'tasks',
+    recurrence: 'none',
+    recurrenceDays: [],
+    date: getToday(), 
+    completions: {},
     completed: false,
     subtasks: [],
   },
@@ -54,6 +89,11 @@ const initialTasks = [
     id: 4,
     title: 'Work on Schedule Tracker',
     category: 'Projects',
+    type: 'tasks',
+    recurrence: 'none',
+    recurrenceDays: [],
+    date: getToday(),
+    completions: {},
     completed: false,
     subtasks: [],
   },
@@ -61,6 +101,7 @@ const initialTasks = [
 function App() {
   const [newTask, setNewTask] = useState('')
   const [newCategory, setNewCategory] = useState('Other')
+  const [newRecurrence, setNewRecurrence] = useState('none')
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY)
 
@@ -85,6 +126,11 @@ function App() {
     id: Date.now(),
     title: newTask.trim(),
     category: newCategory,
+    type: 'tasks',
+    recurrence: newRecurrence,
+    recurrenceDays: [],
+    date: getToday(),
+    completions: {},
     completed: false,
     subtasks: [],
   }
@@ -92,6 +138,7 @@ function App() {
   setTasks([...tasks, task])
   setNewTask('')
   setNewCategory('Other')
+  setNewRecurrence('none')
 }
   function toggleTask(id) {
     setTasks(
@@ -109,6 +156,27 @@ function App() {
             ...subtask,
             completed,
           })),
+        }
+      })
+    )
+  }
+  function toggleRecurringTask(taskId) {
+    const today = getToday()
+
+    setTasks(
+      tasks.map((task) => {
+        if (task.id !== taskId) {
+          return task
+        }
+
+        const currentlyCompleted = task.completions?.[today] || false
+
+        return {
+          ...task,
+          completions: {
+            ...task.completions,
+            [today]: !currentlyCompleted,
+          },
         }
       })
     )
@@ -171,20 +239,39 @@ function App() {
             <option value="Other">Other</option>
           </select>
 
+          <select
+            value={newRecurrence}
+            onChange={(event) => setNewRecurrence(event.target.value)}
+          >
+            <option value="none">Does not repeat</option>
+            <option value="daily">Every day</option>
+            <option value="weekly">Every week</option>
+          </select>
+
           <button type="button" onClick={addTask}>
             Add
           </button>
         </div>
 
         <div className="task-list">
-          {tasks.map((task) => (
+          {tasks.filter(isTaskForToday).map((task) => (
             <div className="task" key={task.id}>
               <div className="task-main">
                 <label>
                   <input
                     type="checkbox"
-                    checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
+                    checked={
+                      task.recurrence !== 'none'
+                        ? task.completions?.[getToday()] || false
+                        : task.completed
+                    }
+                    onChange={() => {
+                      if (task.recurrence !== 'none') {
+                        toggleRecurringTask(task.id)
+                      } else {
+                        toggleTask(task.id)
+                      }
+                    }}
                   />
 
                   <div>
