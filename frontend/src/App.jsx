@@ -2,7 +2,24 @@ import { useEffect, useState } from 'react'
 import './App.css'
 const STORAGE_KEY = 'schedule-tracker-tasks'
 function getToday() {
-  return new Date().toISOString().split('T')[0]
+  const today = new Date()
+
+  return [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+function changeDate(date, days) {
+  const newDate = new Date(`${date}T00:00:00`)
+
+  newDate.setDate(newDate.getDate() + days)
+
+  return [
+    newDate.getFullYear(),
+    String(newDate.getMonth() + 1).padStart(2, '0'),
+    String(newDate.getDate()).padStart(2, '0'),
+  ].join('-')
 }
 function isTaskForToday(task) {
   const today = getToday()
@@ -308,7 +325,28 @@ function App() {
         <p>Plan your day. Track your progress.</p>
         <p>Selected date: {selectedDate}</p>
       </header>
+      <div className="date-navigation">
+        <button
+          type="button"
+          onClick={() => setSelectedDate(changeDate(selectedDate, -1))}
+        >
+          Previous
+        </button>
 
+        <button
+          type="button"
+          onClick={() => setSelectedDate(getToday())}
+        >
+          Today
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSelectedDate(changeDate(selectedDate, 1))}
+        >
+          Next
+        </button>
+      </div>
       <section className="task-section">
         <h2>Today's Tasks</h2>
         <div className="add-task">
