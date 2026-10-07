@@ -106,6 +106,8 @@ function App() {
   const [newCategory, setNewCategory] = useState('Other')
   const [newRecurrence, setNewRecurrence] = useState('none')
   const [newRecurrenceDays, setNewRecurrenceDays] = useState([])
+   const [selectedDate, setSelectedDate] = useState(getToday())
+  
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY)
 
@@ -304,6 +306,7 @@ function App() {
       <header className="header">
         <h1>Schedule Tracker</h1>
         <p>Plan your day. Track your progress.</p>
+        <p>Selected date: {selectedDate}</p>
       </header>
 
       <section className="task-section">
@@ -315,7 +318,7 @@ function App() {
             value={newTask}
             onChange={(event) => setNewTask(event.target.value)}
           />
-
+          
           <select
             value={newCategory}
             onChange={(event) => setNewCategory(event.target.value)}
