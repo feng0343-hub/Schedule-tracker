@@ -21,22 +21,24 @@ function changeDate(date, days) {
     String(newDate.getDate()).padStart(2, '0'),
   ].join('-')
 }
-function isTaskForToday(task) {
-  const today = getToday()
-
+function isTaskForSelectedDate(task, selectedDate) {
   if (task.recurrence === 'daily') {
     return true
   }
 
   if (task.recurrence === 'weekly') {
-    const todayName = new Date().toLocaleDateString('en-US', {
-      weekday: 'long',
-    }).toLowerCase()
+    const selectedDayName = new Date(
+      `${selectedDate}T00:00:00`
+    )
+      .toLocaleDateString('en-US', {
+        weekday: 'long',
+      })
+      .toLowerCase()
 
-    return task.recurrenceDays.includes(todayName)
+    return task.recurrenceDays.includes(selectedDayName)
   }
 
-  return task.date === today
+  return task.date === selectedDate
 }
 function getSubtaskProgress(subtasks) {
   if (subtasks.length === 0) {
@@ -171,10 +173,14 @@ function App() {
           return task
         }
 
-        const completed = !task.completed
+        const completed = !task.completions?.[selectedDate]
 
         return {
           ...task,
+          completions: {
+            ...task.completions,
+            [selectedDate]: completed,
+          },
           completed,
           subtasks: task.subtasks.map((subtask) => ({
             ...subtask,
@@ -280,6 +286,7 @@ function App() {
     )
   }
   
+  
   function toggleSubtask(taskId, subtaskId) {
     setTasks(
       tasks.map((task) => {
@@ -287,24 +294,42 @@ function App() {
           return task
         }
 
-        const updatedSubtasks = task.subtasks.map((subtask) =>
-          subtask.id === subtaskId
-            ? { ...subtask, completed: !subtask.completed }
-            : subtask
-        )
+        const updatedSubtasks = task.subtasks.map((subtask) => {
+          if (subtask.id !== subtaskId) {
+            return subtask
+          }
+
+          const completed = !subtask.completions?.[selectedDate]
+
+          return {
+            ...subtask,
+            completions: {
+              ...subtask.completions,
+              [selectedDate]: completed,
+            },
+            completed,
+          }
+        })
 
         const allSubtasksCompleted =
           updatedSubtasks.length > 0 &&
-          updatedSubtasks.every((subtask) => subtask.completed)
+          updatedSubtasks.every(
+            (subtask) => subtask.completions?.[selectedDate] || false
+          )
 
         return {
           ...task,
           subtasks: updatedSubtasks,
+          completions: {
+            ...task.completions,
+            [selectedDate]: allSubtasksCompleted,
+          },
           completed: allSubtasksCompleted,
         }
       })
     )
   }
+
   function toggleRecurrenceDay(day) {
     setNewRecurrenceDays((currentDays) => {
       if (currentDays.includes(day)) {
@@ -413,7 +438,9 @@ function App() {
         </div>
 
         <div className="task-list">
-          {tasks.filter(isTaskForToday).map((task) => (
+          {tasks
+            .filter((task) => isTaskForSelectedDate(task, selectedDate))
+            .map((task) => (
             <div className="task" key={task.id}>
               <div className="task-main">
                 <label>
@@ -421,8 +448,8 @@ function App() {
                     type="checkbox"
                     checked={
                       task.recurrence !== 'none'
-                        ? task.completions?.[getToday()] || false
-                        : task.completed
+                        ? task.completions?.[selectedDate] || false
+                        : task.completions?.[selectedDate] || false
                     }
                     onChange={() => {
                       if (task.recurrence !== 'none') {
@@ -452,9 +479,7 @@ function App() {
                           <input
                             type="checkbox"
                             checked={
-                              task.recurrence !== 'none'
-                                ? subtask.completions?.[getToday()] || false
-                                : subtask.completed
+                              subtask.completions?.[selectedDate] || false
                             }
                             onChange={() => {
                               if (task.recurrence !== 'none') {
@@ -464,7 +489,11 @@ function App() {
                               }
                             }}
                           />
-                          <span className={subtask.completed ? 'completed' : ''}>
+                          <span
+                            className={
+                              subtask.completions?.[selectedDate] ? 'completed' : ''
+                            }
+                          >
                             {subtask.title}
                           </span>
                         </div>
