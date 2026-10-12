@@ -211,8 +211,9 @@ function App() {
       })
     )
   }
+
   function toggleRecurringSubtask(taskId, subtaskId) {
-    const today = getToday()
+    const date = selectedDate
 
     setTasks(
       tasks.map((task) => {
@@ -226,13 +227,13 @@ function App() {
           }
 
           const currentlyCompleted =
-            subtask.completions?.[today] || false
+            subtask.completions?.[date] || false
 
           return {
             ...subtask,
             completions: {
               ...subtask.completions,
-              [today]: !currentlyCompleted,
+              [date]: !currentlyCompleted,
             },
           }
         })
@@ -240,7 +241,7 @@ function App() {
         const allSubtasksCompleted =
           updatedSubtasks.length > 0 &&
           updatedSubtasks.every(
-            (subtask) => subtask.completions?.[today] || false
+            (subtask) => subtask.completions?.[date] || false
           )
 
         return {
@@ -248,14 +249,16 @@ function App() {
           subtasks: updatedSubtasks,
           completions: {
             ...task.completions,
-            [today]: allSubtasksCompleted,
+            [date]: allSubtasksCompleted,
           },
         }
       })
     )
   }
+
+ 
   function toggleRecurringTaskWithSubtasks(taskId) {
-    const today = getToday()
+    const date = selectedDate
 
     setTasks(
       tasks.map((task) => {
@@ -264,7 +267,7 @@ function App() {
         }
 
         const currentlyCompleted =
-          task.completions?.[today] || false
+          task.completions?.[date] || false
 
         const newCompletedState = !currentlyCompleted
 
@@ -272,19 +275,20 @@ function App() {
           ...task,
           completions: {
             ...task.completions,
-            [today]: newCompletedState,
+            [date]: newCompletedState,
           },
           subtasks: task.subtasks.map((subtask) => ({
             ...subtask,
             completions: {
               ...subtask.completions,
-              [today]: newCompletedState,
+              [date]: newCompletedState,
             },
           })),
         }
       })
     )
   }
+
   
   
   function toggleSubtask(taskId, subtaskId) {
