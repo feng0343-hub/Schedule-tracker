@@ -412,3 +412,126 @@ select:focus-visible {
 .add-task button:active {
   transform: scale(0.97);
 }
+
+/* Add-task form layout */
+.add-task {
+  align-items: stretch;
+}
+
+.add-task input,
+.add-task select {
+  min-height: 44px;
+}
+
+.add-task button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+/* Weekly recurrence day selector */
+.recurrence-days {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 100%;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #29334b;
+  border-radius: 12px;
+  background: #0f172a;
+}
+
+.recurrence-days > span {
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.day-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.day-button {
+  min-width: 46px;
+  padding: 9px 11px;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  background: #151d30;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+.day-button:hover {
+  border-color: #818cf8;
+  background-color: #202a40;
+}
+
+
+.day-options .day-button.selected {
+  border: 1px solid #f87171;
+  background-color: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+}
+
+.day-options .day-button.selected:hover {
+  border-color: #fca5a5;
+  background-color: #b91c1c;
+}
+
+
+@media (max-width: 600px) {
+  .recurrence-days {
+    padding: 12px;
+  }
+
+  .day-options {
+    gap: 6px;
+  }
+
+  .day-button {
+    min-width: 42px;
+    padding: 9px 8px;
+  }
+}
+
+/* Task form visual hierarchy */
+.add-task {
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #29334b;
+  border-radius: 12px;
+  background: #0f172a;
+}
+
+.add-task input,
+.add-task select {
+  background-color: #151d30;
+  border-color: #374151;
+}
+
+.add-task input:focus,
+.add-task select:focus {
+  border-color: #818cf8;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+}
+
+.add-task button {
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.add-task button:hover {
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25);
+}
+
+@media (max-width: 600px) {
+  .add-task {
+    padding: 12px;
+  }
+}
