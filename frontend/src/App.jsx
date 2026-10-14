@@ -376,6 +376,15 @@ function App() {
           Next
         </button>
       </div>
+      <div className="date-picker">
+        <label htmlFor="selected-date">Go to date:</label>
+        <input
+          id="selected-date"
+          type="date"
+          value={selectedDate}
+          onChange={(event) => setSelectedDate(event.target.value)}
+        />
+      </div>
       <section className="task-section">
         <h2>Today's Tasks</h2>
         <div className="add-task">
