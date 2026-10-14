@@ -125,8 +125,10 @@ function App() {
   const [newCategory, setNewCategory] = useState('Other')
   const [newRecurrence, setNewRecurrence] = useState('none')
   const [newRecurrenceDays, setNewRecurrenceDays] = useState([])
-   const [selectedDate, setSelectedDate] = useState(getToday())
+  const [selectedDate, setSelectedDate] = useState(getToday())
   
+
+
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY)
 
@@ -142,6 +144,22 @@ function App() {
       JSON.stringify(tasks)
     )
   }, [tasks])
+  
+  const visibleTasks = tasks.filter((task) =>
+    isTaskForSelectedDate(task, selectedDate)
+  )
+
+  const completedTasks = visibleTasks.filter(
+    (task) => task.completions?.[selectedDate] || false
+  ).length
+
+  const totalTasks = visibleTasks.length
+
+  const progressPercentage =
+    totalTasks === 0
+      ? 0
+      : Math.round((completedTasks / totalTasks) * 100)
+
   function addTask() {
   if (newTask.trim() === '') {
     return
@@ -386,6 +404,25 @@ function App() {
         />
       </div>
       <section className="task-section">
+        <div className="daily-progress">
+          <div className="daily-progress-header">
+            <div>
+              <h3>Daily Progress</h3>
+              <p>Keep moving toward your goals.</p>
+            </div>
+
+            <span className="daily-progress-count">
+              {completedTasks} / {totalTasks}
+            </span>
+          </div>
+
+          <div className="daily-progress-bar">
+            <div
+              className="daily-progress-fill"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
         <h2>Today's Tasks</h2>
         <div className="add-task">
           <input

@@ -535,3 +535,60 @@ select:focus-visible {
     padding: 12px;
   }
 }
+
+/* Daily progress summary */
+.daily-progress {
+  margin-bottom: 28px;
+  padding: 18px;
+  border: 1px solid #29334b;
+  border-radius: 12px;
+  background: #0f172a;
+}
+
+.daily-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.daily-progress-header h3 {
+  margin: 0 0 5px;
+  color: #f3f4f6;
+  font-size: 16px;
+}
+
+.daily-progress-header p {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.daily-progress-count {
+  color: #f87171;
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.daily-progress-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #29334b;
+}
+
+.daily-progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: #dc2626;
+  transition: width 0.25s ease;
+}
+
+@media (max-width: 480px) {
+  .daily-progress {
+    padding: 14px;
+  }
+}
