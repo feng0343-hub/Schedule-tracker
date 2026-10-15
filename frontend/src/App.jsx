@@ -127,6 +127,30 @@ function App() {
   const [newRecurrenceDays, setNewRecurrenceDays] = useState([])
   const [selectedDate, setSelectedDate] = useState(getToday())
   
+  const selectedYear = Number(selectedDate.split('-')[0])
+  const selectedMonth = Number(selectedDate.split('-')[1]) - 1
+
+  const monthName = new Date(
+    selectedYear,
+    selectedMonth
+  ).toLocaleString('default', { month: 'long', year: 'numeric' })
+
+  const daysInMonth = new Date(
+    selectedYear,
+    selectedMonth + 1,
+    0
+  ).getDate()
+
+  // Convert Sunday-first JavaScript weekdays to Monday-first calendar columns.
+  const firstDayOffset =
+    (new Date(selectedYear, selectedMonth, 1).getDay() + 6) % 7
+
+  const calendarDays = [
+    ...Array(firstDayOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+  ]
+
+  
 
 
   const [tasks, setTasks] = useState(() => {
@@ -403,6 +427,155 @@ function App() {
           onChange={(event) => setSelectedDate(event.target.value)}
         />
       </div>
+      
+      <div className="monthly-calendar">
+        
+        <div className="calendar-header">
+          <button
+            type="button"
+            className="calendar-nav-button"
+            onClick={() => {
+              const previousMonth = new Date(
+                selectedYear,
+                selectedMonth - 1,
+                1
+              )
+              const year = previousMonth.getFullYear()
+              const month = String(previousMonth.getMonth() + 1).padStart(2, '0')
+              const day = String(
+                Math.min(
+                  Number(selectedDate.split('-')[2]),
+                  new Date(year, previousMonth.getMonth() + 1, 0).getDate()
+                )
+              ).padStart(2, '0')
+
+              setSelectedDate(`${year}-${month}-${day}`)
+            }}
+          >
+            ←
+          </button>
+
+          <h3>{monthName}</h3>
+
+          <button
+            type="button"
+            className="calendar-nav-button"
+            onClick={() => {
+              const nextMonth = new Date(
+                selectedYear,
+                selectedMonth + 1,
+                1
+              )
+              const year = nextMonth.getFullYear()
+              const month = String(nextMonth.getMonth() + 1).padStart(2, '0')
+              const day = String(
+                Math.min(
+                  Number(selectedDate.split('-')[2]),
+                  new Date(year, nextMonth.getMonth() + 1, 0).getDate()
+                )
+              ).padStart(2, '0')
+
+              setSelectedDate(`${year}-${month}-${day}`)
+            }}
+          >
+            →
+          </button>
+        </div>
+
+
+        <div className="calendar-weekdays">
+          <span>Mon</span>
+          <span>Tue</span>
+          <span>Wed</span>
+          <span>Thu</span>
+          <span>Fri</span>
+          <span>Sat</span>
+          <span>Sun</span>
+        </div>
+
+        
+        <div className="calendar-days">
+          {calendarDays.map((day, index) => {
+            if (day === null) {
+              return <div key={`empty-${index}`} />
+            }
+
+            const date = [
+              selectedYear,
+              String(selectedMonth + 1).padStart(2, '0'),
+              String(day).padStart(2, '0'),
+            ].join('-')
+
+            const isSelected = date === selectedDate
+            const isToday = date === getToday()
+            
+            
+            const dayTasks = tasks.filter((task) =>
+              isTaskForSelectedDate(task, date)
+            )
+
+            const completedDayTasks = dayTasks.filter(
+              (task) => task.completions?.[date] || false
+            ).length
+
+            const hasTasks = dayTasks.length > 0
+            const allTasksCompleted =
+              hasTasks && completedDayTasks === dayTasks.length
+            const someTasksCompleted = completedDayTasks > 0
+
+
+            return (
+              <button
+                key={date}
+                type="button"
+                className={[
+                  isSelected ? 'selected' : '',
+                  isToday ? 'today' : '',
+                  hasTasks ? 'has-tasks' : '',
+                ].filter(Boolean).join(' ')}
+                onClick={() => setSelectedDate(date)}
+              >
+                <span>{day}</span>
+                {hasTasks && (
+                  <span
+                    className={[
+                      'calendar-task-dot',
+                      allTasksCompleted ? 'completed' : '',
+                      someTasksCompleted && !allTasksCompleted ? 'in-progress' : '',
+                    ].filter(Boolean).join(' ')}
+                  />
+                )}
+              </button>
+            )
+
+          })}
+        </div>
+        
+        <div className="calendar-legend">
+          <div className="legend-item">
+            <span className="legend-dot completed" />
+            <span>All tasks completed</span>
+          </div>
+
+          <div className="legend-item">
+            <span className="legend-dot in-progress" />
+            <span>Tasks remaining</span>
+          </div>
+
+          <div className="legend-item">
+            <span className="legend-today" />
+            <span>Today</span>
+          </div>
+
+          <div className="legend-item">
+            <span className="legend-selected" />
+            <span>Selected date</span>
+          </div>
+        </div>
+
+
+      </div>
+
       <section className="task-section">
         <div className="daily-progress">
           <div className="daily-progress-header">
