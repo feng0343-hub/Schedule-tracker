@@ -775,3 +775,38 @@ select:focus-visible {
   border: 1px solid #7c3aed;
   background: #7c3aed;
 }
+.calendar-task-count {
+  color: #9ca3af;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.calendar-days button.selected .calendar-task-count {
+  color: #ffffff;
+}
+.calendar-mini-progress {
+  display: block;
+  width: 80%;
+  max-width: 42px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #29334b;
+}
+
+.calendar-mini-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #a78bfa;
+  transition: width 0.2s ease;
+}
+
+.calendar-days button.selected .calendar-mini-progress {
+  background: #4c1d95;
+}
+
+.calendar-days button.selected .calendar-mini-progress-fill {
+  background: #ffffff;
+}

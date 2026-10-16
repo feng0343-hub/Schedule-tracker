@@ -519,6 +519,10 @@ function App() {
             ).length
 
             const hasTasks = dayTasks.length > 0
+            const dayProgressPercentage =
+            dayTasks.length === 0
+              ? 0
+              : Math.round((completedDayTasks / dayTasks.length) * 100)
             const allTasksCompleted =
               hasTasks && completedDayTasks === dayTasks.length
             const someTasksCompleted = completedDayTasks > 0
@@ -536,6 +540,19 @@ function App() {
                 onClick={() => setSelectedDate(date)}
               >
                 <span>{day}</span>
+                {hasTasks && (
+                  <span className="calendar-task-count">
+                    {completedDayTasks}/{dayTasks.length}
+                  </span>
+                )}
+                {hasTasks && (
+                  <span className="calendar-mini-progress">
+                    <span
+                      className="calendar-mini-progress-fill"
+                      style={{ width: `${dayProgressPercentage}%` }}
+                    />
+                  </span>
+                )}
                 {hasTasks && (
                   <span
                     className={[
