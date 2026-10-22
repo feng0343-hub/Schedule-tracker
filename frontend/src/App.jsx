@@ -1,6 +1,55 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import Auth from './Auth'
+import { supabase } from './supabaseClient'
 const STORAGE_KEY = 'schedule-tracker-tasks'
+async function importLocalTasksToSupabase(userId) {
+  const savedTasks = localStorage.getItem(STORAGE_KEY)
+
+  if (!savedTasks) {
+    return { error: 'No saved local tasks were found.' }
+  }
+
+  let localTasks
+
+  try {
+    localTasks = JSON.parse(savedTasks)
+  } catch {
+    return { error: 'Your saved tasks are not valid JSON.' }
+  }
+
+  if (!Array.isArray(localTasks)) {
+    return { error: 'Your saved tasks are not in the expected format.' }
+  }
+
+  if (localTasks.length === 0) {
+    return { error: 'Your local task list is empty.' }
+  }
+
+  const rows = localTasks.map((task) => ({
+    id: String(task.id),
+    user_id: userId,
+    title: task.title,
+    category: task.category ?? null,
+    type: task.type ?? null,
+    recurrence: task.recurrence ?? 'none',
+    recurrence_days: task.recurrenceDays ?? [],
+    task_date: task.date || null,
+    completions: task.completions ?? {},
+    completed: Boolean(task.completed),
+    subtasks: task.subtasks ?? [],
+  }))
+
+  const { error } = await supabase
+    .from('tasks')
+    .insert(rows)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { imported: rows.length }
+}
 function getToday() {
   const today = new Date()
 
@@ -126,7 +175,8 @@ function App() {
   const [newRecurrence, setNewRecurrence] = useState('none')
   const [newRecurrenceDays, setNewRecurrenceDays] = useState([])
   const [selectedDate, setSelectedDate] = useState(getToday())
-  
+  const [session, setSession] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const selectedYear = Number(selectedDate.split('-')[0])
   const selectedMonth = Number(selectedDate.split('-')[1]) - 1
 
@@ -153,21 +203,79 @@ function App() {
   
 
 
-  const [tasks, setTasks] = useState(() => {
-    const savedTasks = localStorage.getItem(STORAGE_KEY)
+  const [tasks, setTasks] = useState([])
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Failed to get session:', error.message)
+      }
 
-    if (savedTasks) {
-      return JSON.parse(savedTasks)
+      setSession(data?.session ?? null)
+      setAuthLoading(false)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession)
+      setAuthLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+  const [tasksLoaded, setTasksLoaded] = useState(false)
+  useEffect(() => {
+    if (!session?.user?.id) return
+
+    let cancelled = false
+
+    async function loadTasks() {
+      setTasksLoaded(false)
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', session.user.id)
+
+      if (cancelled) return
+
+      if (error) {
+        console.error('Failed to load tasks:', error.message)
+        alert('Could not load tasks from Supabase: ' + error.message)
+        return
+      }
+
+      const cloudTasks = data.map((task) => ({
+        id: task.id,
+        title: task.title,
+        category: task.category,
+        type: task.type,
+        recurrence: task.recurrence,
+        recurrenceDays: task.recurrence_days,
+        date: task.task_date,
+        completions: task.completions,
+        completed: task.completed,
+        subtasks: task.subtasks,
+      }))
+
+      setTasks(cloudTasks)
+      setTasksLoaded(true)
     }
 
-    return initialTasks
-  })
+    loadTasks()
+
+    return () => {
+      cancelled = true
+    }
+  }, [session])
   useEffect(() => {
+    if (!tasksLoaded) return
+
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify(tasks)
     )
-  }, [tasks])
+  }, [tasks, tasksLoaded])
   
   const visibleTasks = tasks.filter((task) =>
     isTaskForSelectedDate(task, selectedDate)
@@ -184,119 +292,166 @@ function App() {
       ? 0
       : Math.round((completedTasks / totalTasks) * 100)
 
-  function addTask() {
-  if (newTask.trim() === '') {
-    return
+ 
+  async function addTask() {
+    if (newTask.trim() === '' || !tasksLoaded || !session?.user?.id) {
+      return
+    }
+
+    const task = {
+      id: Date.now(),
+      title: newTask.trim(),
+      category: newCategory,
+      type: 'tasks',
+      recurrence: newRecurrence,
+      recurrenceDays: newRecurrenceDays,
+      date: getToday(),
+      completions: {},
+      completed: false,
+      subtasks: [],
+    }
+
+    const { error } = await supabase.from('tasks').insert({
+      id: String(task.id),
+      user_id: session.user.id,
+      title: task.title,
+      category: task.category,
+      type: task.type,
+      recurrence: task.recurrence,
+      recurrence_days: task.recurrenceDays,
+      task_date: task.date,
+      completions: task.completions,
+      completed: task.completed,
+      subtasks: task.subtasks,
+    })
+
+    if (error) {
+      console.error('Failed to add task:', error.message)
+      alert('Could not add task to the cloud: ' + error.message)
+      return
+    }
+
+    setTasks((currentTasks) => [...currentTasks, task])
+    setNewTask('')
+    setNewCategory('Other')
+    setNewRecurrence('none')
+    setNewRecurrenceDays([])
   }
 
-  const task = {
-    id: Date.now(),
-    title: newTask.trim(),
-    category: newCategory,
-    type: 'tasks',
-    recurrence: newRecurrence,
-    recurrenceDays: newRecurrenceDays,
-    date: getToday(),
-    completions: {},
-    completed: false,
-    subtasks: [],
-  }
 
-  setTasks([...tasks, task])
-  setNewTask('')
-  setNewCategory('Other')
-  setNewRecurrence('none')
-  setNewRecurrenceDays([])
-}
   function toggleTask(id) {
-    setTasks(
-      tasks.map((task) => {
-        if (task.id !== id) {
-          return task
-        }
+    const updatedTasks = tasks.map((task) => {
+      if (task.id !== id) {
+        return task
+      }
 
-        const completed = !task.completions?.[selectedDate]
+      const completed = !task.completions?.[selectedDate]
 
-        return {
-          ...task,
-          completions: {
-            ...task.completions,
-            [selectedDate]: completed,
-          },
+      return {
+        ...task,
+        completions: {
+          ...task.completions,
+          [selectedDate]: completed,
+        },
+        completed,
+        subtasks: task.subtasks.map((subtask) => ({
+          ...subtask,
           completed,
-          subtasks: task.subtasks.map((subtask) => ({
-            ...subtask,
-            completed,
-          })),
-        }
-      })
-    )
+        })),
+      }
+    })
+
+    setTasks(updatedTasks)
+
+    const updatedTask = updatedTasks.find((task) => task.id === id)
+
+    if (updatedTask && tasksLoaded) {
+      saveTaskToSupabase(updatedTask)
+    }
   }
+
+ 
+
   function toggleRecurringTask(taskId) {
     const today = getToday()
 
-    setTasks(
-      tasks.map((task) => {
-        if (task.id !== taskId) {
-          return task
-        }
+    const updatedTasks = tasks.map((task) => {
+      if (task.id !== taskId) {
+        return task
+      }
 
-        const currentlyCompleted = task.completions?.[today] || false
+      const currentlyCompleted = task.completions?.[today] || false
 
-        return {
-          ...task,
-          completions: {
-            ...task.completions,
-            [today]: !currentlyCompleted,
-          },
-        }
-      })
-    )
+      return {
+        ...task,
+        completions: {
+          ...task.completions,
+          [today]: !currentlyCompleted,
+        },
+      }
+    })
+
+    setTasks(updatedTasks)
+
+    const updatedTask = updatedTasks.find((task) => task.id === taskId)
+
+    if (updatedTask && tasksLoaded) {
+      saveTaskToSupabase(updatedTask)
+    }
   }
+
+
 
   function toggleRecurringSubtask(taskId, subtaskId) {
     const date = selectedDate
 
-    setTasks(
-      tasks.map((task) => {
-        if (task.id !== taskId) {
-          return task
+    const updatedTasks = tasks.map((task) => {
+      if (task.id !== taskId) {
+        return task
+      }
+
+      const updatedSubtasks = task.subtasks.map((subtask) => {
+        if (subtask.id !== subtaskId) {
+          return subtask
         }
 
-        const updatedSubtasks = task.subtasks.map((subtask) => {
-          if (subtask.id !== subtaskId) {
-            return subtask
-          }
-
-          const currentlyCompleted =
-            subtask.completions?.[date] || false
-
-          return {
-            ...subtask,
-            completions: {
-              ...subtask.completions,
-              [date]: !currentlyCompleted,
-            },
-          }
-        })
-
-        const allSubtasksCompleted =
-          updatedSubtasks.length > 0 &&
-          updatedSubtasks.every(
-            (subtask) => subtask.completions?.[date] || false
-          )
+        const currentlyCompleted =
+          subtask.completions?.[date] || false
 
         return {
-          ...task,
-          subtasks: updatedSubtasks,
+          ...subtask,
           completions: {
-            ...task.completions,
-            [date]: allSubtasksCompleted,
+            ...subtask.completions,
+            [date]: !currentlyCompleted,
           },
         }
       })
-    )
+
+      const allSubtasksCompleted =
+        updatedSubtasks.length > 0 &&
+        updatedSubtasks.every(
+          (subtask) => subtask.completions?.[date] || false
+        )
+
+      return {
+        ...task,
+        subtasks: updatedSubtasks,
+        completions: {
+          ...task.completions,
+          [date]: allSubtasksCompleted,
+        },
+      }
+    })
+
+    setTasks(updatedTasks)
+
+    const updatedTask = updatedTasks.find((task) => task.id === taskId)
+
+    if (updatedTask && tasksLoaded) {
+      saveTaskToSupabase(updatedTask)
+    }
   }
+
 
  
   function toggleRecurringTaskWithSubtasks(taskId) {
@@ -333,48 +488,56 @@ function App() {
 
   
   
+ 
   function toggleSubtask(taskId, subtaskId) {
-    setTasks(
-      tasks.map((task) => {
-        if (task.id !== taskId) {
-          return task
+    const updatedTasks = tasks.map((task) => {
+      if (task.id !== taskId) {
+        return task
+      }
+
+      const updatedSubtasks = task.subtasks.map((subtask) => {
+        if (subtask.id !== subtaskId) {
+          return subtask
         }
 
-        const updatedSubtasks = task.subtasks.map((subtask) => {
-          if (subtask.id !== subtaskId) {
-            return subtask
-          }
-
-          const completed = !subtask.completions?.[selectedDate]
-
-          return {
-            ...subtask,
-            completions: {
-              ...subtask.completions,
-              [selectedDate]: completed,
-            },
-            completed,
-          }
-        })
-
-        const allSubtasksCompleted =
-          updatedSubtasks.length > 0 &&
-          updatedSubtasks.every(
-            (subtask) => subtask.completions?.[selectedDate] || false
-          )
+        const completed = !subtask.completions?.[selectedDate]
 
         return {
-          ...task,
-          subtasks: updatedSubtasks,
+          ...subtask,
           completions: {
-            ...task.completions,
-            [selectedDate]: allSubtasksCompleted,
+            ...subtask.completions,
+            [selectedDate]: completed,
           },
-          completed: allSubtasksCompleted,
+          completed,
         }
       })
-    )
+
+      const allSubtasksCompleted =
+        updatedSubtasks.length > 0 &&
+        updatedSubtasks.every(
+          (subtask) => subtask.completions?.[selectedDate] || false
+        )
+
+      return {
+        ...task,
+        subtasks: updatedSubtasks,
+        completions: {
+          ...task.completions,
+          [selectedDate]: allSubtasksCompleted,
+        },
+        completed: allSubtasksCompleted,
+      }
+    })
+
+    setTasks(updatedTasks)
+
+    const updatedTask = updatedTasks.find((task) => task.id === taskId)
+
+    if (updatedTask && tasksLoaded) {
+      saveTaskToSupabase(updatedTask)
+    }
   }
+
 
   function toggleRecurrenceDay(day) {
     setNewRecurrenceDays((currentDays) => {
@@ -385,10 +548,59 @@ function App() {
       return [...currentDays, day]
     })
   }
-  function deleteTask(id) {
-    setTasks(tasks.filter((task) => task.id !== id))
+
+  async function deleteTask(id) {
+    if (!tasksLoaded || !session?.user?.id) {
+      return
+    }
+
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', String(id))
+      .eq('user_id', session.user.id)
+
+    if (error) {
+      console.error('Failed to delete task:', error.message)
+      alert('Could not delete task from the cloud: ' + error.message)
+      return
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.filter((task) => task.id !== id)
+    )
   }
 
+  async function saveTaskToSupabase(task) {
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        title: task.title,
+        category: task.category ?? null,
+        type: task.type ?? null,
+        recurrence: task.recurrence ?? 'none',
+        recurrence_days: task.recurrenceDays ?? [],
+        task_date: task.date || null,
+        completions: task.completions ?? {},
+        completed: Boolean(task.completed),
+        subtasks: task.subtasks ?? [],
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', String(task.id))
+      .eq('user_id', session.user.id)
+
+    if (error) {
+      console.error('Failed to save task to Supabase:', error.message)
+      alert('Could not save task to the cloud: ' + error.message)
+    }
+  }
+  if (authLoading) {
+    return <p>Loading Schedule Tracker...</p>
+  }
+
+  if (!session) {
+    return <Auth />
+  }
   return (
     <main className="app">
       <header className="header">
