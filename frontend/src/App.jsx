@@ -454,37 +454,47 @@ function App() {
 
 
  
+
   function toggleRecurringTaskWithSubtasks(taskId) {
     const date = selectedDate
 
-    setTasks(
-      tasks.map((task) => {
-        if (task.id !== taskId) {
-          return task
-        }
+    const updatedTasks = tasks.map((task) => {
+      if (task.id !== taskId) {
+        return task
+      }
 
-        const currentlyCompleted =
-          task.completions?.[date] || false
+      const currentlyCompleted =
+        task.completions?.[date] || false
 
-        const newCompletedState = !currentlyCompleted
+      const newCompletedState = !currentlyCompleted
 
-        return {
-          ...task,
+      return {
+        ...task,
+        completions: {
+          ...task.completions,
+          [date]: newCompletedState,
+        },
+        subtasks: task.subtasks.map((subtask) => ({
+          ...subtask,
           completions: {
-            ...task.completions,
+            ...subtask.completions,
             [date]: newCompletedState,
           },
-          subtasks: task.subtasks.map((subtask) => ({
-            ...subtask,
-            completions: {
-              ...subtask.completions,
-              [date]: newCompletedState,
-            },
-          })),
-        }
-      })
+        })),
+      }
+    })
+
+    setTasks(updatedTasks)
+
+    const updatedTask = updatedTasks.find(
+      (task) => task.id === taskId
     )
+
+    if (updatedTask && tasksLoaded) {
+      saveTaskToSupabase(updatedTask)
+    }
   }
+
 
   
   
@@ -603,6 +613,7 @@ function App() {
   }
   return (
     <main className="app">
+
       <header className="header">
         <h1>Schedule Tracker</h1>
         <p>Plan your day. Track your progress.</p>
