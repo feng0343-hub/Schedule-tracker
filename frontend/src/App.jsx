@@ -836,7 +836,21 @@ function App() {
             />
           </div>
         </div>
-        <h2>Today's Tasks</h2>
+        <h2>
+          {selectedDate === getToday()
+            ? "Today's Tasks"
+            : selectedDate === (() => {
+                const tomorrow = new Date()
+                tomorrow.setDate(tomorrow.getDate() + 1)
+                return `${tomorrow.getFullYear()}-${String(
+                  tomorrow.getMonth() + 1
+                ).padStart(2, '0')}-${String(
+                  tomorrow.getDate()
+                ).padStart(2, '0')}`
+              })()
+            ? "Tomorrow's Tasks"
+            : `Tasks for ${selectedDate}`}
+        </h2>
         <div className="add-task">
           <input
             type="text"
