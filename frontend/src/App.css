@@ -192,6 +192,20 @@ select:focus-visible {
   font-size: 12px;
 }
 
+
+
+.task-recurrence {
+  display: inline-block;
+  margin-top: 5px;
+  margin-left: 6px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #ffedd5;
+  color: #9a3412;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .task-main {
   flex: 1;
   min-width: 0;

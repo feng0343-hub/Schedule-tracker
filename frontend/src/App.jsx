@@ -821,7 +821,11 @@ function App() {
           <div className="daily-progress-header">
             <div>
               <h3>Daily Progress</h3>
-              <p>Keep moving toward your goals.</p>
+              <p>
+                Progress for {selectedDate === getToday()
+                  ? 'today'
+                  : selectedDate}
+              </p>
             </div>
 
             <span className="daily-progress-count">
@@ -942,9 +946,17 @@ function App() {
                       {task.title}
                     </span>
 
+                    
                     <small className="task-category">
                       {task.category}
                     </small>
+
+                    {task.recurrence !== 'none' && (
+                      <small className="task-recurrence">
+                        {task.recurrence === 'daily' ? 'Daily' : 'Weekly'}
+                      </small>
+                    )}
+
                   </div>
                 </label>
 
