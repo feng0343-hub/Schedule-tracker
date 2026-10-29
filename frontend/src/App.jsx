@@ -59,6 +59,19 @@ function getToday() {
     String(today.getDate()).padStart(2, '0'),
   ].join('-')
 }
+
+function isTaskOverdue(task) {
+  if (task.recurrence !== 'none') {
+    return false
+  }
+
+  if (!task.date || task.date >= getToday()) {
+    return false
+  }
+
+  return !task.completions?.[task.date]
+}
+
 function changeDate(date, days) {
   const newDate = new Date(`${date}T00:00:00`)
 
@@ -305,7 +318,7 @@ function App() {
       type: 'tasks',
       recurrence: newRecurrence,
       recurrenceDays: newRecurrenceDays,
-      date: getToday(),
+      date: selectedDate,
       completions: {},
       completed: false,
       subtasks: [],
@@ -950,6 +963,13 @@ function App() {
                     <small className="task-category">
                       {task.category}
                     </small>
+                    
+                    
+                    {isTaskOverdue(task) && (
+                      <small className="task-overdue">
+                        Overdue
+                      </small>
+                    )}
 
                     {task.recurrence !== 'none' && (
                       <small className="task-recurrence">
